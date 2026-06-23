@@ -1,0 +1,36 @@
+services:
+
+  # Using official reference from https://hub.docker.com/_/postgres & https://www.postgresql.org/docs/14/libpq-envars.html
+  db:
+    image: postgres:18
+    container_name: cybersafe-db
+    restart: unless-stopped
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: cybersafe_admin
+      POSTGRES_PASSWORD: admin_password
+      POSTGRES_DB: cybersafe
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./migrations:/docker-entrypoint-initdb.d
+      - pgdata:/var/lib/postgresql
+  
+  # Using official reference from https://postgrest.org/en/stable/explanations/install.html#docker
+  postgrest:
+    image: postgrest/postgrest:v14.3
+    container_name: cybersafe-postgrest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PGRST_DB_URI: postgres://authenticator:postgrest_password@db:5432/cybersafe
+      PGRST_DB_SCHEMAS: api
+      PGRST_DB_ANON_ROLE: cybersafe_read
+      PGRST_SERVER_CORS_ALLOWED_ORIGINS: "*"
+    depends_on:
+      - db
+  
+volumes:
+  pgdata:
+  pgadmin-data:

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1>CyberSafe LA - Live API Demo</h1>
+<p>Every table below is fetched live from the PostgREST API at http://localhost:3000.</p>
+
+<button onclick="tryWrite()">Try to add a business (should be rejected - read-only role)</button>
+<p id="writeResult"></p>
+
+<div id="out">Loading...</div>
+
+<script>
+const API = "http://localhost:3000/";
+
+async function show(endpoint) {
+  const rows = await (await fetch(API + endpoint)).json();
+  let html = "<h2>" + endpoint + "</h2><table border='1'><tr>";
+  for (const col of Object.keys(rows[0])) html += "<th>" + col + "</th>";
+  html += "</tr>";
+  for (const row of rows) {
+    html += "<tr>";
+    for (const col of Object.keys(rows[0])) html += "<td>" + (row[col] ?? "") + "</td>";
+    html += "</tr>";
+  }
+  return html + "</table>";
+}
+
+async function tryWrite() {
+  const res = await fetch(API + "business_client", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ business_name: "Unauthorized Inc" })
+  });
+  document.getElementById("writeResult").textContent =
+    res.ok ? "Write succeeded (unexpected!)"
+           : "Write blocked by read-only role. HTTP " + res.status;
+}
+
+(async () => {
+  let html = "";
+  html += await show("business_client?limit=5");
+  html += await show("business_client?employee_count=gt.20&limit=5");
+  html += await show("questionnaire_response?limit=10");
+  html += await show("knowledge_base_entry?limit=5");
+  html += await show("consultants_per_cohort");
+  html += await show("referral_conversion");
+  html += await show("clients_per_industry");
+  document.getElementById("out").innerHTML = html;
+})();
+</script>
+</body>
+</html>
