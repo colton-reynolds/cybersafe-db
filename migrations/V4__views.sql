@@ -24,6 +24,21 @@ SELECT naics_code, COUNT(*) AS client_count
 FROM api.business_client
 GROUP BY naics_code;
 
+-- number of assignments per consultant
+CREATE VIEW api.assignments_per_consultant AS
+SELECT
+    consultant.consultant_id,
+    consultant.first_name,
+    consultant.last_name,
+    COUNT(assignment.assignment_id) AS active_assignments
+FROM api.consultant
+LEFT JOIN api.assignment
+    ON assignment.consultant_id = consultant.consultant_id
+   AND assignment.deleted_at IS NULL
+GROUP BY consultant.consultant_id, consultant.first_name, consultant.last_name
+ORDER BY active_assignments DESC;
+
 -- have to give permission to role
-GRANT SELECT ON api.consultants_per_cohort, api.referral_conversion, api.clients_per_industry
+GRANT SELECT ON api.consultants_per_cohort, api.referral_conversion,
+                api.clients_per_industry, api.assignments_per_consultant
   TO cybersafe_read, cybersafe_write;
